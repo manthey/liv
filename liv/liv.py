@@ -133,10 +133,25 @@ def to_blocks(blocks, usecolor, x, vblocks):
     return out
 
 
+# limit this size; maybe add locking at that point
+sourceCache = {}
+
+
+# handle style, etc.
 def open_source(source, opts):
+    if source in sourceCache:
+        return sourceCache[source]
     if getattr(opts, 'usesource', None) is None and getattr(opts, 'skipsource', None) is None:
         ts = large_image.open(source)
     else:
+        if not len(large_image.tilesource.AvailableTileSources):
+            large_image.tilesource.loadTileSources()
+        sublist = {
+            k: v for k, v in large_image.tilesource.AvailableTileSources.items()
+            if (getattr(opts, 'skipsource', None) is None or k not in opts.skipsource) and
+               (getattr(opts, 'usesource', None) is None or k in opts.usesource)}
+        ts = large_image.tilesource.getTileSourceFromDict(sublist, source)
+        """
         canread = large_image.canReadList(source)
         for src, couldread in canread:
             if getattr(opts, 'skipsource', None) and src in opts.skipsource:
@@ -144,6 +159,8 @@ def open_source(source, opts):
             if getattr(opts, 'usesource', None) and src not in opts.usesource:
                 continue
             ts = large_image.tilesource.AvailableTileSources[src](source)
+        """
+    sourceCache[source] = ts
     return ts
 
 
@@ -230,6 +247,7 @@ def show_console(sources, opts):
 
 
 def main(opts):
+    large_image.tilesource.loadTileSources()
     if opts.all:
         for key in list(large_image.config.ConfigValues):
             if '_ignored_names' in key:
