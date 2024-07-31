@@ -107,7 +107,7 @@ def show_gui(sources, opts, url):
 
 
 def to_dots(bw):
-    at = bw.T.flatten()
+    flat = bw.T.flatten()
     val = sum(2**idx if flat[idx] else 0 for idx in range(8))
     return chr(0x2800 + val)
 
@@ -301,7 +301,7 @@ def command():
     parser.add_argument(
         'source', nargs='*', type=str,
         help='Source file to view.  By itself, a separate window is opened '
-		'for each file that can be viewed.  This can be a directory for the '
+        'for each file that can be viewed.  This can be a directory for the '
         'entire directory tree, a glob pattern, urls starting with http or '
         'https.  Prefix with - to remove the file, directory, or glob pattern '
         'from the sources analyzed.  Sources are analyzed in a sorted order.')
@@ -365,6 +365,7 @@ def command():
 
 
 if __name__ == '__main__':
+    large_image.config.setConfig('cache_backend', 'python')
     command()
 
 # options:
