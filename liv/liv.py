@@ -9,6 +9,7 @@ import os
 import socket
 import sys
 import threading
+import time
 
 import large_image
 import numpy as np
@@ -53,7 +54,7 @@ def start_server(sources, opts):
     if not opts.port:
         opts.port = find_free_port()
     logger.info(f'Starting on {opts.host}:{opts.port}')
-    if opts.web:
+    if opts.web and opts.web != 'open':
         server.run(
             host=opts.host, port=opts.port,
             use_reloader=(opts.verbose - opts.silent) >= 2,
@@ -260,6 +261,12 @@ def main(opts):
     url = start_server(sources, opts)
     if not opts.web:
         show_gui(sources, opts, url)
+    elif opts.web == 'open':
+        import webbrowser
+
+        webbrowser.open(url)
+        while True:
+            time.sleep(1)
 
 
 def get_sources(sourceList, sources=None):
@@ -340,6 +347,9 @@ def command():
     parser.add_argument(
         '--web', action='store_true', default=False,
         help='Only start the server, not the menu gui.')
+    parser.add_argument(
+        '--open', dest='web', action='store_const', const='open',
+        default=False, help='Start the server and open an existing browser.')
     parser.add_argument(
         '--gui', action='store_false', dest='web',
         help='Show the menu gui.')
