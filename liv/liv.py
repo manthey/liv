@@ -27,6 +27,7 @@ def find_free_port():
 
 
 def start_server(sources, opts):
+    # pip install flask; flask uses click, so we have to quiet the noise
     import click
     import flask
 
@@ -69,6 +70,7 @@ def start_server(sources, opts):
 
 
 def show_gui(sources, opts, url):
+    # pip install pywebview
     import webview
 
     window = webview.create_window(
