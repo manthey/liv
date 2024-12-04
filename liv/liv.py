@@ -6,6 +6,7 @@ import ctypes
 import glob
 import logging
 import os
+import pprint
 import socket
 import sys
 import threading
@@ -34,7 +35,8 @@ def start_server(sources, opts):
     def noecho(*args, **kwargs):
         pass
 
-    logging.getLogger('werkzeug').setLevel(max(1, logging.ERROR - (opts.verbose - opts.silent) * 10))
+    logging.getLogger('werkzeug').setLevel(
+        max(1, logging.ERROR - (opts.verbose - opts.silent) * 10))
     click.echo = noecho
     click.secho = noecho
     web_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'web')
@@ -50,7 +52,7 @@ def start_server(sources, opts):
 
     @server.route('/zxy/<z>/<x>/<y>')
     def getTile(z, x, y):
-        return open_source(sources[0], opts).getTile(int(x), int(y), int(z))
+        return open_source(sources[0], opts).getTile(int(x), int(y), int(z), frame=opts.frame)
 
     if not opts.port:
         opts.port = find_free_port()
@@ -188,8 +190,10 @@ def image_to_console(source, opts):
     thumbh = height if aspect_ratio > 1 else int(height / aspect_ratio)
 
     ts = open_source(source, opts)
-    img = ts.getThumbnail(
-        format=large_image.constants.TILE_FORMAT_PIL, width=thumbw, height=thumbh)[0]
+    img = ts.getRegion(
+        format=large_image.constants.TILE_FORMAT_PIL,
+        output={'maxWidth': thumbw, 'maxHeight': thumbh}, frame=opts.frame,
+        **opts._view_params)[0]
     thumbw, thumbh = img.size
 
     if aspect_ratio < 1:
@@ -232,6 +236,13 @@ def image_to_console(source, opts):
     return output
 
 
+def show_metadata(source, opts):
+    ts = open_source(source, opts)
+    meta = ts.metadata.copy()
+    meta.pop('frames', None)
+    sys.stdout.write(pprint.pformat(meta).strip() + '\n')
+
+
 def show_console(sources, opts):
     try:
         kernel32 = ctypes.windll.kernel32
@@ -241,12 +252,25 @@ def show_console(sources, opts):
     for source in sources:
         sys.stdout.write(f'{source}\n')
         try:
-            result = image_to_console(source, opts)
-            for line in result.split('\n'):
-                sys.stdout.write(line + '\n')
+            if opts.metadata:
+                show_metadata(source, opts)
+            if opts.frame == -1:
+                ts = open_source(source, opts)
+                for frame in range(ts.frames):
+                    opts.frame = frame
+                    result = image_to_console(source, opts)
+                    if ts.frames > 1:
+                        sys.stdout.write(f'Frame {frame}\n')
+                    for line in result.split('\n'):
+                        sys.stdout.write(line + '\n')
+            else:
+                result = image_to_console(source, opts)
+                for line in result.split('\n'):
+                    sys.stdout.write(line + '\n')
             # sys.stdout.write(result + '\n')
         except Exception:
-            pass
+            if opts.verbose - opts.silent >= 3:
+                logger.exception('Could not open source')
 
 
 def main(opts):
@@ -325,6 +349,9 @@ def command():
         '--console', '--con', action='store_true', default=False,
         help='Display in-line on the console.')
     parser.add_argument(
+        '--metadata', '--meta', '-m', action='store_true', default=False,
+        help='Display metadata in-line if using the console.')
+    parser.add_argument(
         '--width', '-w', type=int,
         help='Width of the console output; defaults to terminal width.')
     parser.add_argument(
@@ -339,6 +366,11 @@ def command():
     parser.add_argument(
         '--contrast', type=float, default=0.25,
         help='Increase the contrast to the console.  0 is no change, 1 is full.')
+    parser.add_argument(
+        '--frame', type=int, default=0,
+        help='View a specific frame.  Use -1 to show all frames in turn.')
+    parser.add_argument(
+        '--bbox', help='View a specific bounding box (left,top,right,bottom).')
 
     parser.add_argument(
         '--host', default='127.0.0.1',
@@ -361,6 +393,11 @@ def command():
     logger.setLevel(max(1, logging.WARNING - (opts.verbose - opts.silent) * 10))
     logger.addHandler(logging.StreamHandler(sys.stderr))
     logger.debug('Command options: %r', opts)
+    opts._view_params = {}
+    if opts.bbox:
+        bbox = [int(val) for val in opts.bbox.split(',')]
+        opts._view_params['region'] = {
+            'left': bbox[0], 'top': bbox[1], 'right': bbox[2], 'bottom': bbox[3]}
     main(opts)
 
 
