@@ -207,6 +207,7 @@ def image_to_console(source, opts):
     if not opts.color:
         dotw, doth = dotw * 2, doth * 2
 
+    img = img.convert('RGB')
     adjimg = PIL.ImageOps.autocontrast(img, cutoff=0.02)
     # adjimg = PIL.ImageOps.equalize(img)
     img = PIL.Image.blend(img, adjimg, opts.contrast)
