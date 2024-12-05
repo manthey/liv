@@ -144,10 +144,13 @@ sourceCache = {}
 
 # handle style, etc.
 def open_source(source, opts):
+    params = {}
+    if opts.style:
+        params['style'] = opts.style
     if source in sourceCache:
         return sourceCache[source]
     if getattr(opts, 'usesource', None) is None and getattr(opts, 'skipsource', None) is None:
-        ts = large_image.open(source)
+        ts = large_image.open(source, **params)
     else:
         if not len(large_image.tilesource.AvailableTileSources):
             large_image.tilesource.loadTileSources()
@@ -155,7 +158,7 @@ def open_source(source, opts):
             k: v for k, v in large_image.tilesource.AvailableTileSources.items()
             if (getattr(opts, 'skipsource', None) is None or k not in opts.skipsource) and
                (getattr(opts, 'usesource', None) is None or k in opts.usesource)}
-        ts = large_image.tilesource.getTileSourceFromDict(sublist, source)
+        ts = large_image.tilesource.getTileSourceFromDict(sublist, source, **params)
         """
         canread = large_image.canReadList(source)
         for src, couldread in canread:
@@ -371,6 +374,8 @@ def command():
         help='View a specific frame.  Use -1 to show all frames in turn.')
     parser.add_argument(
         '--bbox', help='View a specific bounding box (left,top,right,bottom).')
+    parser.add_argument(
+        '--style', help='Add a json style.')
 
     parser.add_argument(
         '--host', default='127.0.0.1',
