@@ -172,7 +172,7 @@ def open_source(source, opts):
     return ts
 
 
-def image_to_console(source, opts):
+def image_to_console(source, opts, assoc=None):
     try:
         termw, termh = os.get_terminal_size()
         termh -= 2
@@ -193,10 +193,15 @@ def image_to_console(source, opts):
     thumbh = height if aspect_ratio > 1 else int(height / aspect_ratio)
 
     ts = open_source(source, opts)
-    img = ts.getRegion(
-        format=large_image.constants.TILE_FORMAT_PIL,
-        output={'maxWidth': thumbw, 'maxHeight': thumbh}, frame=opts.frame,
-        **opts._view_params)[0]
+    if not assoc:
+        img = ts.getRegion(
+            format=large_image.constants.TILE_FORMAT_PIL,
+            output={'maxWidth': thumbw, 'maxHeight': thumbh}, frame=opts.frame,
+            **opts._view_params)[0]
+    else:
+        img = ts.getAssociatedImage(
+            assoc, width=thumbw, height=thumbh,
+            format=large_image.constants.TILE_FORMAT_PIL)[0]
     thumbw, thumbh = img.size
 
     if aspect_ratio < 1:
@@ -271,6 +276,16 @@ def show_console(sources, opts):
                 result = image_to_console(source, opts)
                 for line in result.split('\n'):
                     sys.stdout.write(line + '\n')
+            if opts.associated:
+                spec = opts.associated
+                ts = open_source(source, opts)
+                for assoc in ts.getAssociatedImagesList():
+                    if assoc == spec or spec == 'all':
+                        opts.associated = spec
+                        result = image_to_console(source, opts, assoc)
+                        sys.stdout.write(f'Associated image {assoc}\n')
+                        for line in result.split('\n'):
+                            sys.stdout.write(line + '\n')
             # sys.stdout.write(result + '\n')
         except Exception:
             if opts.verbose - opts.silent >= 3:
@@ -373,6 +388,9 @@ def command():
     parser.add_argument(
         '--frame', type=int, default=0,
         help='View a specific frame.  Use -1 to show all frames in turn.')
+    parser.add_argument(
+        '--associated', '--assoc',
+        help='View an associated image.  Use "all" to show all associated images in turn.')
     parser.add_argument(
         '--bbox', help='View a specific bounding box (left,top,right,bottom).')
     parser.add_argument(
