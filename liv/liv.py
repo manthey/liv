@@ -300,9 +300,14 @@ def main(opts):
                 del large_image.config.ConfigValues[key]
         large_image.config.ConfigValues.pop('all_sources_ignored_names', None)
     sources = get_sources(opts.source)
+    if not opts.console and not opts.web and opts.port:
+        opts.web = True
     if not opts.console:
         try:
             import flask
+
+            if not opts.web:
+                import webview
         except ImportError:
             opts.console = True
     if opts.console:
