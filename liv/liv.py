@@ -300,6 +300,11 @@ def main(opts):
                 del large_image.config.ConfigValues[key]
         large_image.config.ConfigValues.pop('all_sources_ignored_names', None)
     sources = get_sources(opts.source)
+    if not opts.console:
+        try:
+            import flask
+        except ImportError:
+            opts.console = True
     if opts.console:
         show_console(sources, opts)
         return

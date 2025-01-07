@@ -1,0 +1,52 @@
+[build-system]
+requires = ["setuptools >= 61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "liv"
+description = "Large Image Viewer"
+# readme = "README.md"
+dynamic = ["version"]
+authors = [
+    {name = "David Manthey", email = "david.mathey@kitware.com"},
+]    
+classifiers = [
+    'Development Status :: 5 - Production/Stable',
+    'License :: OSI Approved :: Apache Software License',
+    'Programming Language :: Python :: 3',
+    'Programming Language :: Python :: 3.9',
+    'Programming Language :: Python :: 3.10',
+    'Programming Language :: Python :: 3.11',
+    'Programming Language :: Python :: 3.12',
+    'Programming Language :: Python :: 3.13',
+]
+
+dependencies = [
+  "large-image[common]",
+  "numpy",
+  "Pillow",
+]
+
+[project.optional-dependencies]
+server = [
+    "click",
+    "flask",
+]
+
+gui = [
+    "click",
+    "flask",
+    "pywebview",
+]
+
+[project.urls]
+Homepage = "https://github.com/manthey/liv.git"
+Documentation = "https://github.com/manthey/liv.git"
+Repository = "https://github.com/manthey/liv.git"
+Issues = "https://github.com/manthey/liv/issues"
+Changelog = "https://github.com/girder/large_image/blob/master/CHANGELOG.md"
+
+# TODO:
+# Add entry point
+[project.entry-points.console_scripts]
+liv = "liv.liv:command"
