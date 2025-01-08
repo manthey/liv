@@ -213,6 +213,8 @@ def image_to_console(source, opts, assoc=None):
         dotw, doth = dotw * 2, doth * 2
 
     img = img.convert('RGB')
+    if opts.skip_blank and len({v for b in img.getextrema() for v in b}) == 1:
+        raise Exception('Image is blank')
     adjimg = PIL.ImageOps.autocontrast(img, cutoff=0.02)
     # adjimg = PIL.ImageOps.equalize(img)
     img = PIL.Image.blend(img, adjimg, opts.contrast)
@@ -395,6 +397,10 @@ def command():
     parser.add_argument(
         '--contrast', type=float, default=0.25,
         help='Increase the contrast to the console.  0 is no change, 1 is full.')
+    parser.add_argument(
+        '--skip-blank', action='store_true',
+        help='If an image is all the same color, do not show it in the '
+        'console.')
     parser.add_argument(
         '--frame', type=int, default=0,
         help='View a specific frame.  Use -1 to show all frames in turn.')
