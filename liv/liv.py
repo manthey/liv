@@ -2,6 +2,7 @@
 
 import argparse
 import contextlib
+import copy
 import ctypes
 import glob
 import logging
@@ -265,11 +266,13 @@ def show_console(sources, opts):
         try:
             if opts.metadata:
                 show_metadata(source, opts)
-            if opts.frame == -1:
+            if opts.frame < 0:
                 ts = open_source(source, opts)
-                for frame in range(ts.frames):
-                    opts.frame = frame
-                    result = image_to_console(source, opts)
+                for frame in range(
+                        ts.frames if opts.frame == -1 else min(ts.frames, -opts.frame)):
+                    subopts = copy.copy(opts)
+                    subopts.frame = frame
+                    result = image_to_console(source, subopts)
                     if ts.frames > 1:
                         sys.stdout.write(f'Frame {frame}\n')
                     for line in result.split('\n'):
@@ -283,8 +286,9 @@ def show_console(sources, opts):
                 ts = open_source(source, opts)
                 for assoc in ts.getAssociatedImagesList():
                     if assoc == spec or spec == 'all':
-                        opts.associated = spec
-                        result = image_to_console(source, opts, assoc)
+                        subopts = copy.copy(opts)
+                        subopts.associated = spec
+                        result = image_to_console(source, subopts, assoc)
                         sys.stdout.write(f'Associated image {assoc}\n')
                         for line in result.split('\n'):
                             sys.stdout.write(line + '\n')
@@ -403,7 +407,8 @@ def command():
         'console.')
     parser.add_argument(
         '--frame', type=int, default=0,
-        help='View a specific frame.  Use -1 to show all frames in turn.')
+        help='View a specific frame.  Use -1 to show all frames in turn.  Use '
+        '-<val> to show the first <val> frames in turn.')
     parser.add_argument(
         '--associated', '--assoc',
         help='View an associated image.  Use "all" to show all associated images in turn.')
