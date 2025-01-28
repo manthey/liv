@@ -448,6 +448,7 @@ def command():
 
 if __name__ == '__main__':
     large_image.config.setConfig('cache_backend', 'python')
+    large_image.config.setConfig('max_small_image_size', 16384)
     command()
 
 # options:
