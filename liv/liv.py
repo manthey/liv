@@ -5,6 +5,7 @@ import contextlib
 import copy
 import ctypes
 import glob
+import json
 import logging
 import os
 import pprint
@@ -414,6 +415,15 @@ def command():
         help='View an associated image.  Use "all" to show all associated images in turn.')
     parser.add_argument(
         '--bbox', help='View a specific bounding box (left,top,right,bottom).')
+    parser.add_argument(
+        '--spiff', dest='style', action='store_const', const=json.dumps({'bands': [{
+            'band': 1, 'palette': 'R', 'min': 'min:0.002', 'max': 'max:0.002',
+        }, {
+            'band': 2, 'palette': 'G', 'min': 'min:0.002', 'max': 'max:0.002',
+        }, {
+            'band': 3, 'palette': 'B', 'min': 'min:0.002', 'max': 'max:0.002',
+        }]}),
+        help='This is short-hand for an autoranging style.')
     parser.add_argument(
         '--style', help='Add a json style.')
 
